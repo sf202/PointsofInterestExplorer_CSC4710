@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block sub_content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About</title>
+  <!-- Link to Google Fonts API for Google Around font -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;700&display=swap">
+  <style>
+    /* Apply Google Around font to specific elements */
+    h1, p {
+      font-family: 'Google Sans', sans-serif;
+      font-weight: 400; /* Regular weight for paragraphs */
+    }
+
+    h1 {
+      font-weight: 700; /* Bold weight for headings */
+    }
+  </style>
+</head>
+<body>
+  <!-- Your content goes here -->
+  <h1>About</h1>
+  <p>
+    We intend to build a points of interest (POI) explorer that allows users to discover, rate, and discuss parks, historical sites, and other significant landmarks within a specific city-region. Our proposed web application would serve as a centralized hub of landmark related information by utilizing open-source data to populate comprehensive listings. The existence of such a repository encourages both tourism and community engagement from residents as users' discoveries foster a sense of connection, city-identity, exploration, and boost the local economy. In short, the platform will engage residents and tourists while also promoting economic activity in a city-region.   
+
+    As previously mentioned, the application will utilize open-source data which ensures that all content is freely accessible and reusable. In particular, data sets from OpenStreetMap, Wikimedia Commons, and various government / public domains will be used. Unlike alternative platforms / services such as Google Maps, which primarily serves as a mapping platform, or Yelp, which is primarily for crowd-sourced reviews about commercial businesses such as restaurants, our platform will primarily focus on community engagement and detailed exploration of sites through user-contributed stories, historical facts, and personal recommendations. The biggest difference between our proposed platform and services like Google or Yelp is the intended audience and the why. In our case, we are first serving tourists & residents with public and historically significant landmarks as the focus of the application, not commercial restaurants (Yelp) or mainly functioning as a general-purpose mapping application (Google Maps).  </p>
+</body>
+</html>
+
+{% endblock %}
