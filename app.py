@@ -33,6 +33,13 @@ def index():
 def about():
     return render_template('about.html')
 
+
+@app.route('/map/')
+def map():
+    return render_template('map.html')
+
+
+
 @app.route('/blogs/<int:id>/')
 def blogs(id):
     cur = mysql.connection.cursor()
@@ -162,6 +169,8 @@ def logout():
     session.clear()
     flash("You have been logged out", 'info')
     return redirect('/')
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)

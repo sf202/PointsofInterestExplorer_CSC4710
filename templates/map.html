@@ -1,0 +1,160 @@
+{% extends "layout.html" %}
+{% block sub_content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    
+    <title>Point Of Interest Explorer</title>
+	<link rel="icon" type="food" href="/src/food.png"/>
+    <link rel="stylesheet" href="/src/styles/style.css">
+    <style>
+ body {
+    background-image: url('/static/carbon.jpg'); /* Replace with the path to your image file */
+        }
+        #map-container {
+            bottom: 80px; /* Adjust bottom spacing as needed */
+            right: 20px; /* Adjust right spacing as needed */
+            display: flex;
+            justify-content: center;
+            height: 15vh; /* Adjust the map height as needed */
+        }
+
+        #map {
+            height: 50vw;
+            width:50vw; /* Adjust the map width as needed */
+        }
+
+        #seller {
+            font-size: 18px; /* Adjust the font size as needed */
+            padding: 15px 30px; /* Adjust the padding as needed */
+        }
+        #sellers-login-btn{
+            font-size: 18px; /* Adjust the font size as needed */
+            padding: 15px 30px; /* Adjust the padding as needed */
+        }
+        .dropdown-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* Align items to the left */
+    margin-bottom: 20px;
+}
+
+.dropdown-label {
+    font-size: 20px;
+    color: black;
+    margin-bottom: 10px;
+}
+.category-select {
+    display: flex; /* Use flexbox */
+    justify-content: center; /* Center horizontally */
+    padding: 12px;
+    font-size: 46px;
+    border: 2px solid #3498db;
+    border-radius: 8px;
+    background-color: rgb(241, 241, 241);
+    color: #333;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.category-select:hover {
+    border-color: #2980b9;
+}
+
+.category-select:focus {
+    border-color: #2980b9;
+    box-shadow: 0 0 0 2px #87badb;
+}
+
+h1 {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-weight: bold;
+    color: #1877f2; 
+    letter-spacing: -1px; /* Adjust letter spacing as needed */
+}
+
+h1::after {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 8px; /* Adjust the height to move the line lower */
+    border-radius: 0 0 8px 8px; /* Adjust border-radius as needed */
+    position: absolute; /* Set position to absolute to position the line relative to the h1 */
+    bottom: 715px; /* Adjust the bottom value to move the line lower */
+}
+#radiusDropdown {
+    font-size: 40px;
+  /* Apply styles similar to .dropdown-container */
+  border: 1px solid #ccc;
+  padding: 10px;
+  background-color: #f9f9f9;
+  /* Add more styles as needed */
+}
+
+
+        /* Add hover effect */
+        .home-button:hover {
+            background-color: #032104; /* Darker green color on hover */
+        }
+    </style>
+</head>
+<body>
+    <h1>Point Of Explorer</h1>
+    <div class="dropdown-container">
+        <label for="categoryFilter" class="dropdown-label">Select Attraction:</label>
+        <select id="categoryFilter" class="category-select">
+            <option value="all">All</option>
+            <option value="Parks">Parks</option>
+            <option value="HistoricalSites">HistoricalSites</option>
+            <option value="Landmarks">Landmarks</option>
+        </select>
+        <br>
+        <label for="categoryFilter" class="dropdown-label">Select Radius :</label>
+        <select id="radiusDropdown">
+            <option value="23">3 miles</option>
+            <option value="18">8 miles</option>
+            <option value="13">13 miles</option>
+            <option value="8">18 miles</option>
+            <option value="3">23 miles</option>
+          </select>
+          
+    
+    </div>
+
+    <div>
+    <label for="zip-code"></label>
+    <button onclick="useMyLocation()">Use My Location</button><br><br>
+    </div>
+  <div id="floating-panel">
+	  
+     </select>
+	  <button id="but" type="button"></button>
+     </select>
+
+</div>
+<div id="right-panel"></div>
+
+
+    <div id="map-container">
+        <div id="map"></div>
+    </div>
+    <br>
+ 
+
+
+
+
+
+   
+    <script src="/static/main.js"></script> 
+    <!-- Include the Google Maps JavaScript API script here, with your API key     C:\Users\filmh\Documents\PythonFlaskTutorial\my-sample-project\frontJS
+--> 
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAkW0iGM8DniteJO7xa_yEuJseeFGQJLBM&libraries=geometry&callback=initMap" async defer></script>
+</body>
+</html>
+
+{% endblock %}
