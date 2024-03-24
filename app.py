@@ -31,7 +31,33 @@ def index():
 
 @app.route('/about/')
 def about():
-    return render_template('about.html')
+    cur = mysql.connection.cursor()
+
+    # Calculate average rating
+    cur.execute("SELECT AVG(rating) AS avg_rating FROM blog")
+    avg_rating_result = cur.fetchone()
+    avg_rating = avg_rating_result['avg_rating'] if avg_rating_result['avg_rating'] else 0
+
+    # Fetch join results
+    cur.execute("""
+        SELECT u.first_name AS firstname, b.body AS blog_body, e.user_id AS event_userid
+        FROM `user` u
+        LEFT JOIN blog b ON u.user_id = b.author
+        LEFT JOIN events e ON u.user_id = e.user_id
+    """)
+    join_results = cur.fetchall()
+
+    cur.close()
+    return render_template('about.html', avg_rating=avg_rating, join_results=join_results)
+
+
+
+
+
+
+
+
+
 
 
 @app.route('/map/')
@@ -170,6 +196,62 @@ def logout():
     flash("You have been logged out", 'info')
     return redirect('/')
 
+
+
+@app.route('/search', methods=['GET', 'POST'])
+def search():
+    if request.method == 'POST':
+        username = request.form['username']
+        cur = mysql.connection.cursor()
+        result_value = cur.execute("SELECT first_name, last_name, email FROM user WHERE username = %s", (username,))
+        if result_value > 0:
+            user_info = cur.fetchone()
+            cur.close()
+            return render_template('search_results.html', user_info=user_info)
+        else:
+            cur.close()
+            flash('User not found', 'danger')
+    return render_template('search.html')
+
+@app.route('/search_results', methods=['POST'])
+def search_results():
+    # Assuming you have retrieved user_info from the database or elsewhere
+    user_info = {
+        'first_name': 'John',
+        'last_name': 'Doe',
+        'email': 'johndoe@example.com'
+    }
+    return render_template('search_results.html', user_info=user_info)
+
+# Define a new route to view events
+@app.route('/events/')
+def view_events():
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM Events")
+    events = cur.fetchall()
+    cur.close()
+    return render_template('events.html', events=events)
+
+
+# Define a new route to view points of interest
+@app.route('/points_of_interest')  # Corrected URL endpoint without trailing slash
+def points_of_interest():
+    # Database query to fetch points of interest data
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM Points_of_Interest")
+    points_of_interest = cur.fetchall()
+    cur.close()
+    return render_template('points_of_interest.html', points_of_interest=points_of_interest)
+
+
+# Define a new route to view categories
+@app.route('/categories')
+def view_categories():
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM Categories")
+    categories = cur.fetchall()
+    cur.close()
+    return render_template('categories.html', categories=categories)
 
 
 if __name__ == '__main__':
