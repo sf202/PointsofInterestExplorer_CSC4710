@@ -1,0 +1,27 @@
+{%extends "layout.html" %}
+
+{% block sub_content %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Search</title>
+</head>
+<body>
+    <h1>User Search</h1>
+    <form method="POST">
+        <label for="username">Enter Username:</label>
+        <input type="text" id="username" name="username" required>
+        <button type="submit">Search</button>
+    </form>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <ul>
+        {% for message in messages %}
+        <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    {% endwith %}
+</body>
+</html>
+{% endblock %}
