@@ -233,7 +233,7 @@ def view_events():
     return render_template('events.html', events=events)
 
 
-# Define a new route to view points of interest
+# Define a new route to view points of interest  new
 @app.route('/points_of_interest')  # Corrected URL endpoint without trailing slash
 def points_of_interest():
     # Database query to fetch points of interest data
