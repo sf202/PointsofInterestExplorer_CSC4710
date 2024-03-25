@@ -1,0 +1,28 @@
+{% extends "layout.html" %}
+{% block content %}  <!-- Changed block name from sub_content to content -->
+  <h1>Points of Interest</h1>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Category ID</th>
+        <th>Location</th>
+        <th>User ID</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for poi in points_of_interest %}
+        <tr>
+          <td>{{ poi['poi_pid'] }}</td>
+          <td>{{ poi['name'] }}</td>
+          <td>{{ poi['description'] }}</td>
+          <td>{{ poi['category_id'] }}</td>
+          <td>{{ poi['location'] }}</td>
+          <td>{{ poi['user_id'] }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

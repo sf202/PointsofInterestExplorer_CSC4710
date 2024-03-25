@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+{% block sub_content %}
+<h1>Categories</h1>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for category in categories %}
+        <tr>
+            <td>{{ category['category_id'] }}</td>
+            <td>{{ category['category_name'] }}</td>
+            <td>{{ category['description'] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
