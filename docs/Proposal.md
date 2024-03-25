@@ -56,6 +56,12 @@ The ER diagram will detail entities such as Users, Attractions, Reviews, Categor
 
 ### Assumptions:
 
-- POIs are verifiable through open-source datasets.
-- User contributions (reviews, stories, tags) are moderated to ensure quality and relevance.
-- The platform encourages active community participation, assuming users are motivated to share their local knowledge and experiences.
+As we build the Points of Interest Explorer, we're operating under several key assumptions that guide the development and community engagement of our platform:
+
+- **Verifiable POIs**: All Points of Interest (POIs) are expected to be verifiable through open-source datasets. Our data integrity is paramount, ensuring users can trust the accuracy of the information provided.
+
+- **Moderated Contributions**: User contributions, including reviews, stories, and tags, undergo a moderation process. This ensures the quality and relevance of the content, maintaining a high standard for the information shared on our platform.
+
+- **Community Participation**: We believe in the power of community knowledge and experiences. The platform is designed to encourage and leverage active community participation, assuming that users are enthusiastic about sharing insights about their locales.
+
+
