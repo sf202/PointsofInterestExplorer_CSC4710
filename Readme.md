@@ -67,7 +67,7 @@ Collate data from open-source platforms, utilizing available government and publ
 1. **Setup Development Environment**:
    - Fork and clone the repository to your local machine.
    - Install Node.js for Next.js and Python for Flask.
-   - Set up SQLite on your local development machine.
+   - Set up mysql on your local development machine.
 
 2. **Run the Application**:
    - Start the Flask backend server.
