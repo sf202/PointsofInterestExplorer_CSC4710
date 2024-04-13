@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS user(
     last_name varchar(20),
     username varchar(20) unique,
     email varchar(30) unique,
-    password varchar(100), 
+    password varchar(100),
     primary key(user_id)
 );
 

@@ -27,24 +27,27 @@ mysql = MySQL(app)
 app.config["SECRET_KEY"] = "secret"
 
 
-@app.route('/')
+@app.route("/")
 def index():
     """Home page route showing a list of all blog entries."""
     cur = mysql.connection.cursor()
     if cur.execute("SELECT * FROM blog"):
         blogs = cur.fetchall()
         cur.close()
-        return render_template('index.html', blogs=blogs)
+        return render_template("index.html", blogs=blogs)
     cur.close()
-    return render_template('index.html', blogs=None)
+    return render_template("index.html", blogs=None)
 
-@app.route('/about/')
+
+@app.route("/about/")
 def about():
     """About page route showing average ratings and joining data from multiple tables."""
     cur = mysql.connection.cursor()
     cur.execute("SELECT AVG(rating) AS avg_rating FROM blog")
     avg_rating_result = cur.fetchone()
-    avg_rating = avg_rating_result['avg_rating'] if avg_rating_result['avg_rating'] else 0
+    avg_rating = (
+        avg_rating_result["avg_rating"] if avg_rating_result["avg_rating"] else 0
+    )
 
     cur.execute("""
         SELECT u.first_name AS firstname, b.body AS blog_body, e.user_id AS event_userid
@@ -54,159 +57,246 @@ def about():
     """)
     join_results = cur.fetchall()
     cur.close()
-    return render_template('about.html', avg_rating=avg_rating, join_results=join_results)
+    return render_template(
+        "about.html", avg_rating=avg_rating, join_results=join_results
+    )
 
-@app.route('/map/')
+
+@app.route("/map/")
 def map():
     """Route to display a map (static or interactive depending on implementation)."""
-    return render_template('map.html')
+    return render_template("map.html")
 
-@app.route('/blogs/<int:id>/')
+
+@app.route("/blogs/<int:id>/")
 def blogs(id):
     """Route to display a specific blog entry, identified by its ID."""
     cur = mysql.connection.cursor()
     if cur.execute("SELECT * FROM blog WHERE blog_id = %s", (id,)):
         blog = cur.fetchone()
-        return render_template('blog.html', blog=blog)
-    return 'Blog not found'
+        return render_template("blog.html", blog=blog)
+    return "Blog not found"
 
-@app.route('/register/', methods=['GET', 'POST'])
+
+@app.route("/register/", methods=["GET", "POST"])
 def register():
     """Route to handle user registration."""
-    if request.method == 'POST':
+    if request.method == "POST":
         userDetails = request.form
-        if userDetails['password'] != userDetails['confirm_password']:
-            flash('Passwords do not match! Try again.', 'danger')
-            return render_template('register.html')
+        if userDetails["password"] != userDetails["confirm_password"]:
+            flash("Passwords do not match! Try again.", "danger")
+            return render_template("register.html")
         cur = mysql.connection.cursor()
-        cur.execute("INSERT INTO user(first_name, last_name, username, email, password) VALUES (%s,%s,%s,%s,%s)",
-                    (userDetails['first_name'], userDetails['last_name'],
-                     userDetails['username'], userDetails['email'], userDetails['password']))
+        cur.execute(
+            "INSERT INTO user(first_name, last_name, username, email, password) VALUES (%s,%s,%s,%s,%s)",
+            (
+                userDetails["first_name"],
+                userDetails["last_name"],
+                userDetails["username"],
+                userDetails["email"],
+                userDetails["password"],
+            ),
+        )
         mysql.connection.commit()
         cur.close()
-        flash('Registration successful! Please login.', 'success')
-        return redirect('/login')
-    return render_template('register.html')
+        flash("Registration successful! Please login.", "success")
+        return redirect("/login")
+    return render_template("register.html")
 
-@app.route('/login/', methods=['GET', 'POST'])
+
+@app.route("/login/", methods=["GET", "POST"])
 def login():
     """Route to handle user login."""
-    if request.method == 'POST':
+    if request.method == "POST":
         userDetails = request.form
-        username = userDetails['username']
+        username = userDetails["username"]
         cur = mysql.connection.cursor()
         if cur.execute("SELECT * FROM user WHERE username = %s", ([username])):
             user = cur.fetchone()
-            if userDetails['password'] == user['password']:
-                session['login'] = True
-                session['firstName'] = user['first_name']
-                session['lastName'] = user['last_name']
-                flash('Welcome ' + session['firstName'] + '! You have been successfully logged in', 'success')
+            if userDetails["password"] == user["password"]:
+                session["login"] = True
+                session["firstName"] = user["first_name"]
+                session["lastName"] = user["last_name"]
+                flash(
+                    "Welcome "
+                    + session["firstName"]
+                    + "! You have been successfully logged in",
+                    "success",
+                )
             else:
-                flash('Password does not match', 'danger')
-                return render_template('login.html')
+                flash("Password does not match", "danger")
+                return render_template("login.html")
         else:
-            flash('User not found', 'danger')
-            return render_template('login.html')
+            flash("User not found", "danger")
+            return render_template("login.html")
         cur.close()
-        return redirect('/')
-    return render_template('login.html')
+        return redirect("/")
+    return render_template("login.html")
 
-@app.route('/write-blog/', methods=['GET', 'POST'])
+
+@app.route("/write-blog/", methods=["GET", "POST"])
 def write_blog():
     """Route for users to write and submit new blog posts."""
-    if request.method == 'POST':
+    if request.method == "POST":
         blogpost = request.form
         cur = mysql.connection.cursor()
-        cur.execute("INSERT INTO blog(title, body, author, rating, posted_date) VALUES (%s, %s, %s, %s, %s)",
-                    (blogpost['title'], blogpost['body'], session['firstName'] + ' ' + session['lastName'],
-                     blogpost['rating'], blogpost['posted_date']))
+        cur.execute(
+            "INSERT INTO blog(title, body, author, rating, posted_date) VALUES (%s, %s, %s, %s, %s)",
+            (
+                blogpost["title"],
+                blogpost["body"],
+                session["firstName"] + " " + session["lastName"],
+                blogpost["rating"],
+                blogpost["posted_date"],
+            ),
+        )
         mysql.connection.commit()
         cur.close()
-        flash("Successfully posted new blog", 'success')
-        return redirect('/')
-    return render_template('write_blog.html')
+        flash("Successfully posted new blog", "success")
+        return redirect("/")
+    return render_template("write_blog.html")
 
-@app.route('/my-blogs/')
+
+@app.route("/my-blogs/")
 def view_blogs():
     """Route for users to view their own blog posts."""
     cur = mysql.connection.cursor()
-    if cur.execute("SELECT * FROM blog WHERE author = %s", [session['firstName'] + ' ' + session['lastName']]):
+    if cur.execute(
+        "SELECT * FROM blog WHERE author = %s",
+        [session["firstName"] + " " + session["lastName"]],
+    ):
         my_blogs = cur.fetchall()
-        return render_template('my_blogs.html', my_blogs=my_blogs)
-    return render_template('my_blogs.html', my_blogs=None)
+        return render_template("my_blogs.html", my_blogs=my_blogs)
+    return render_template("my_blogs.html", my_blogs=None)
 
-@app.route('/edit-blog/<int:id>/', methods=['GET', 'POST'])
+
+@app.route("/edit-blog/<int:id>/", methods=["GET", "POST"])
 def edit_blog(id):
     """Route for users to edit their blog posts."""
     cur = mysql.connection.cursor()
-    if request.method == 'POST':
-        cur.execute("UPDATE blog SET title = %s, body = %s, rating = %s, posted_date = %s WHERE blog_id = %s",
-                    (request.form['title'], request.form['body'], request.form['rating'],
-                     request.form['posted_date'], id))
+    if request.method == "POST":
+        cur.execute(
+            "UPDATE blog SET title = %s, body = %s, rating = %s, posted_date = %s WHERE blog_id = %s",
+            (
+                request.form["title"],
+                request.form["body"],
+                request.form["rating"],
+                request.form["posted_date"],
+                id,
+            ),
+        )
         mysql.connection.commit()
-        flash('Blog updated successfully', 'success')
-        return redirect('/blogs/{}'.format(id))
+        flash("Blog updated successfully", "success")
+        return redirect("/blogs/{}".format(id))
     if cur.execute("SELECT * FROM blog WHERE blog_id = %s", (id,)):
         blog = cur.fetchone()
-        return render_template('edit_blog.html', blog_form=blog)
-    flash('Blog not found', 'danger')
-    return redirect('/')
+        return render_template("edit_blog.html", blog_form=blog)
+    flash("Blog not found", "danger")
+    return redirect("/")
 
-@app.route('/delete-blog/<int:id>/')
+
+@app.route("/delete-blog/<int:id>/")
 def delete_blog(id):
     """Route for users to delete their blog posts."""
     cur = mysql.connection.cursor()
     cur.execute("DELETE FROM blog WHERE blog_id = %s", (id,))
     mysql.connection.commit()
-    flash("Your blog has been deleted", 'success')
-    return redirect('/my-blogs')
+    flash("Your blog has been deleted", "success")
+    return redirect("/my-blogs")
 
-@app.route('/logout/')
+
+@app.route("/logout/")
 def logout():
     """Route to handle user logout."""
     session.clear()
-    flash("You have been logged out", 'info')
-    return redirect('/')
+    flash("You have been logged out", "info")
+    return redirect("/")
+
 
 @app.route('/search', methods=['GET', 'POST'])
 def search():
-    """Route for searching users by username."""
     if request.method == 'POST':
-        username = request.form['username']
-        cur = mysql.connection.cursor()
-        if cur.execute("SELECT first_name, last_name, email FROM user WHERE username = %s", (username,)):
-            user_info = cur.fetchone()
-            return render_template('search_results.html', user_info=user_info)
-        flash('User not found', 'danger')
-    return render_template('search.html')
+        keyword = request.form.get('keyword', '')
+        category = request.form.get('category', '')
+        location = request.form.get('location', '')
+        sort = request.form.get('sort', 'popularity')
 
-@app.route('/events/')
+        cur = mysql.connection.cursor()
+        query = """
+        SELECT 
+            p.*, 
+            COALESCE(AVG(r.rating), 0) AS average_rating,
+            c.category_name AS category_name,
+            ST_X(p.location) AS latitude,
+            ST_Y(p.location) AS longitude
+        FROM points_of_interest p
+        LEFT JOIN reviews r ON p.poi_pid = r.poi_pid
+        LEFT JOIN categories c ON p.category_id = c.category_id
+        WHERE (%s = '' OR p.name LIKE %s OR p.description LIKE %s)
+        """
+
+        # Add category condition only if a category is selected
+        if category:
+            query += "AND p.category_id = %s "
+
+        # For location, convert the POINT to text for comparison (e.g., using MySQL functions)
+        if location:
+            query += "AND ST_Distance_Sphere(p.location, ST_GeomFromText('POINT({0} {1})', 4326)) < 10000 "
+            # Assuming 10,000 meters (10 km) as the radius within which to find POIs, adjust as necessary
+
+        query += "GROUP BY p.poi_pid, p.name, p.description, p.category_id, p.location, p.user_id, c.category_name "
+
+        if sort == 'popularity':
+            query += "ORDER BY average_rating DESC"
+        else:
+            query += "ORDER BY p.posted_date DESC"
+
+        like_keyword = f"%{keyword}%"
+        if location:
+            lat, lng = map(float, location.split(','))  # Assuming 'location' input as 'lat,lng'
+            cur.execute(query, (keyword, like_keyword, like_keyword, lat, lng))
+        else:
+            cur.execute(query, (keyword, like_keyword, like_keyword))
+        points_of_interest = cur.fetchall()
+        return render_template('search_results.html', points_of_interest=points_of_interest)
+    # Load categories for the form
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM categories")
+    categories = cur.fetchall()
+    return render_template('search.html', categories=categories)
+
+
+@app.route("/events/")
 def view_events():
     """Route to display events."""
     cur = mysql.connection.cursor()
     if cur.execute("SELECT * FROM Events"):
         events = cur.fetchall()
-        return render_template('events.html', events=events)
-    return 'No events found'
+        return render_template("events.html", events=events)
+    return "No events found"
 
-@app.route('/points_of_interest')
+
+@app.route("/points_of_interest")
 def points_of_interest():
     """Route to display points of interest."""
     cur = mysql.connection.cursor()
     if cur.execute("SELECT * FROM Points_of_Interest"):
         points_of_interest = cur.fetchall()
-        return render_template('points_of_interest.html', points_of_interest=points_of_interest)
-    return 'No points of interest found'
+        return render_template(
+            "points_of_interest.html", points_of_interest=points_of_interest
+        )
+    return "No points of interest found"
 
-@app.route('/categories')
+
+@app.route("/categories")
 def view_categories():
     """Route to display categories of points of interest."""
     cur = mysql.connection.cursor()
     if cur.execute("SELECT * FROM Categories"):
         categories = cur.fetchall()
-        return render_template('categories.html', categories=categories)
-    return 'No categories found'
+        return render_template("categories.html", categories=categories)
+    return "No categories found"
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     app.run(debug=True)

@@ -1,4 +1,4 @@
-{%extends "layout.html" %}
+{% extends "layout.html" %}
 
 {% block sub_content %}
 <!DOCTYPE html>
@@ -8,11 +8,21 @@
 </head>
 <body>
     <h1>Search Results</h1>
-    <div>
-        <p><strong>First Name:</strong> {{ user_info.first_name }}</p>
-        <p><strong>Last Name:</strong> {{ user_info.last_name }}</p>
-        <p><strong>Email:</strong> {{ user_info.email }}</p>
-    </div>
+    {% if points_of_interest %}
+        <ul>
+        {% for poi in points_of_interest %}
+            <li>
+                <h2>{{ poi.name }}</h2>
+                <p><strong>Description:</strong> {{ poi.description }}</p>
+                <p><strong>Location:</strong> {{ poi.latitude }}, {{ poi.longitude }}</p>
+                <p><strong>Category:</strong> {{ poi.category_name }}</p> <!-- Assuming category names are loaded in the search -->
+                <p><strong>Rating:</strong> {{ poi.average_rating|default('Not rated yet') }}</p>
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No points of interest found for your search criteria.</p>
+    {% endif %}
 </body>
 </html>
 {% endblock %}

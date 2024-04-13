@@ -1,18 +1,37 @@
-{%extends "layout.html" %}
+{% extends "layout.html" %}
 
 {% block sub_content %}
 <!DOCTYPE html>
 <html>
 <head>
-    <title>User Search</title>
+    <title>Search Points of Interest</title>
 </head>
 <body>
-    <h1>User Search</h1>
+    <h1>Search Points of Interest</h1>
     <form method="POST">
-        <label for="username">Enter Username:</label>
-        <input type="text" id="username" name="username" required>
+        <label for="keyword">Enter Keywords:</label>
+        <input type="text" id="keyword" name="keyword" placeholder="Name or description...">
+
+        <label for="category">Select Category:</label>
+        <select id="category" name="category">
+            <option value="">Any Category</option>
+            {% for category in categories %}
+            <option value="{{ category.category_id }}">{{ category.name }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="location">Location:</label>
+        <input type="text" id="location" name="location" placeholder="Location...">
+
+        <label for="sort">Sort By:</label>
+        <select id="sort" name="sort">
+            <option value="popularity">Most Popular</option>
+            <option value="newest">Newest First</option>
+        </select>
+
         <button type="submit">Search</button>
     </form>
+
     {% with messages = get_flashed_messages() %}
     {% if messages %}
     <ul>
