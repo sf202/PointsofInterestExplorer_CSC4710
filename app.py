@@ -213,13 +213,13 @@ def logout():
     return redirect("/")
 
 
-@app.route('/search', methods=['GET', 'POST'])
+@app.route("/search", methods=["GET", "POST"])
 def search():
-    if request.method == 'POST':
-        keyword = request.form.get('keyword', '')
-        category = request.form.get('category', '')
-        location = request.form.get('location', '')
-        sort = request.form.get('sort', 'popularity')
+    if request.method == "POST":
+        keyword = request.form.get("keyword", "")
+        category = request.form.get("category", "")
+        location = request.form.get("location", "")
+        sort = request.form.get("sort", "popularity")
 
         cur = mysql.connection.cursor()
         query = """
@@ -246,24 +246,28 @@ def search():
 
         query += "GROUP BY p.poi_pid, p.name, p.description, p.category_id, p.location, p.user_id, c.category_name "
 
-        if sort == 'popularity':
+        if sort == "popularity":
             query += "ORDER BY average_rating DESC"
         else:
             query += "ORDER BY p.posted_date DESC"
 
         like_keyword = f"%{keyword}%"
         if location:
-            lat, lng = map(float, location.split(','))  # Assuming 'location' input as 'lat,lng'
+            lat, lng = map(
+                float, location.split(",")
+            )  # Assuming 'location' input as 'lat,lng'
             cur.execute(query, (keyword, like_keyword, like_keyword, lat, lng))
         else:
             cur.execute(query, (keyword, like_keyword, like_keyword))
         points_of_interest = cur.fetchall()
-        return render_template('search_results.html', points_of_interest=points_of_interest)
+        return render_template(
+            "search_results.html", points_of_interest=points_of_interest
+        )
     # Load categories for the form
     cur = mysql.connection.cursor()
     cur.execute("SELECT * FROM categories")
     categories = cur.fetchall()
-    return render_template('search.html', categories=categories)
+    return render_template("search.html", categories=categories)
 
 
 @app.route("/events/")
@@ -280,7 +284,9 @@ def view_events():
 def points_of_interest():
     """Route to display points of interest."""
     cur = mysql.connection.cursor()
-    if cur.execute("SELECT * FROM Points_of_Interest"):
+    if cur.execute(
+        "SELECT poi_pid, name, description, category_id, ST_X(location) AS latitude, ST_Y(location) AS longitude, user_id FROM Points_of_Interest"
+    ):
         points_of_interest = cur.fetchall()
         return render_template(
             "points_of_interest.html", points_of_interest=points_of_interest

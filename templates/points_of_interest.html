@@ -19,7 +19,7 @@
           <td>{{ poi['name'] }}</td>
           <td>{{ poi['description'] }}</td>
           <td>{{ poi['category_id'] }}</td>
-          <td>{{ poi['location'] }}</td>
+          <td>{{ poi.latitude }}, {{ poi.longitude }}</td>
           <td>{{ poi['user_id'] }}</td>
         </tr>
       {% endfor %}
