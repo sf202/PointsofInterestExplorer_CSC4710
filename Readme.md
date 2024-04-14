@@ -64,20 +64,49 @@ Collate data from open-source platforms, utilizing available government and publ
 
 ## Getting Started
 
-1. **Setup Development Environment**:
-   - Fork and clone the repository to your local machine.
-   - Install Node.js for Next.js and Python for Flask.
-   - Set up mysql on your local development machine.
+### Prerequisites
 
-2. **Run the Application**:
-   - Start the Flask backend server.
-   - Run the Next.js development server.
-   - Ensure both servers can communicate with each other.
+- Python (3.x recommended)
+- MySQL Server
 
-3. **Collaborate**:
-   - Utilize Git for version control. Regularly push updates to the remote repository.
-   - Use pull requests for code reviews and merging changes.
-   - Communicate with your team members through your chosen platform (e.g., Slack, Discord).
+### Setup Development Environment
+
+1. **Repository Setup**:
+   - Fork the 'PointsofInterestExplorer' repository and clone your fork to your local machine.
+   - Navigate into the project directory.
+
+2. **Database Initialization**:
+   - Ensure MySQL Server is installed and running on your machine.
+   - Execute the `setup_db.sh` script to create the database and populate it with the initial data:
+     ```bash
+     ./setup_db.sh
+     ```
+   - This script will set up the `flog_db` database and all required tables, along with the initial seed data for points of interest.
+
+3. **Backend Server**:
+   - Set up a Python virtual environment within the project directory:
+     ```bash
+     python3 -m venv venv
+     source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+     ```
+   - Install the required Python dependencies:
+     ```bash
+     pip install -r requirements.txt
+     ```
+   - Start the Flask backend server:
+     ```bash
+     python app.py
+     ```
+
+### Run the Application
+
+With the Flask backend server running, open your web browser and navigate to `http://localhost:5000` to view the application.
+
+### Collaboration
+
+- Commit your changes and use Git for version control. Regularly push updates to the remote repository.
+- Create pull requests for merging changes after peer reviews.
+- Maintain communication with team members via your chosen platform (e.g., Slack, Discord) for coordination and updates.
 
 ## Development Tips
 
