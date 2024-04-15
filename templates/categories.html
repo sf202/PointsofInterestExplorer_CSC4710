@@ -1,22 +1,42 @@
 {% extends "layout.html" %}
+
 {% block sub_content %}
-<h1>Categories</h1>
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Description</th>
-        </tr>
-    </thead>
-    <tbody>
+<div class="container mt-4">
+    <h1 class="mb-4 text-center">Categories</h1>
+
+    <!-- Search filter for categories -->
+    <form action="" method="get" class="mb-4">
+        <div class="input-group">
+            <input type="text" class="form-control" placeholder="Search categories..." name="search" aria-label="Search categories">
+            <div class="input-group-append">
+                <button class="btn btn-outline-secondary" type="submit">Search</button>
+            </div>
+        </div>
+    </form>
+
+    <div class="row">
         {% for category in categories %}
-        <tr>
-            <td>{{ category['category_id'] }}</td>
-            <td>{{ category['category_name'] }}</td>
-            <td>{{ category['description'] }}</td>
-        </tr>
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <!-- Category image -->
+                <img src="{{ category['image_path'] | default('/static/images/default-category.jpg') }}" class="card-img-top" alt="{{ category['category_name'] }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ category['category_name'] }}</h5>
+                    <p class="card-text">{{ category['description'] }}</p>
+                </div>
+                <div class="card-footer">
+                    <!-- Link to related points of interest -->
+                    <a href="/points_of_interest?category_id={{ category['category_id'] }}" class="btn btn-primary">Explore</a>
+                </div>
+            </div>
+        </div>
         {% endfor %}
-    </tbody>
-</table>
+    </div>
+</div>
 {% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<!-- Additional JavaScript or jQuery scripts can be added here if necessary -->
+{% endblock %}
+

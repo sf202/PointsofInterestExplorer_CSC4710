@@ -1,13 +1,27 @@
 {% extends "layout.html" %}
-{% block sub_content %}
-  {% if blogs %}
-    {% for blog in blogs %}
-      <h3> <a href="/blogs/{{ blog['blog_id'] }}">{{blog['title']}} </a> </h3>
-      <h5>Written by {{blog['author']}}</h5>
 
-      <hr>
-    {% endfor %}
-  {% else %}
-    <h3>No blogs have been written yet</h3>
-  {% endif %}
+{% block sub_content %}
+<div class="container mt-4">
+    <h1 class="mb-4 text-center">Latest Reviews</h1>
+    {% if blogs %}
+        <div class="list-group">
+            {% for blog in blogs %}
+                <a href="/blogs/{{ blog['blog_id'] }}" class="list-group-item list-group-item-action flex-column align-items-start">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">{{ blog['title'] }}</h5>
+                        <small>{{ blog['posted_date'].strftime('%Y-%m-%d') }}</small>
+                    </div>
+                    <p class="mb-1">{{ blog['body'] | truncate(150) }}</p>
+                    <small>Written by: {{ blog['author'] }}</small>
+                </a>
+                <hr>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            No reviews have been written yet.
+        </div>
+    {% endif %}
+</div>
 {% endblock %}
+

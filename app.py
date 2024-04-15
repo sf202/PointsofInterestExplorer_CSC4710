@@ -215,13 +215,20 @@ def logout():
 
 @app.route("/search", methods=["GET", "POST"])
 def search():
+    cur = mysql.connection.cursor()
+    # Load categories for the form
+    cur.execute("SELECT * FROM categories")
+    categories = cur.fetchall()
+
     if request.method == "POST":
-        keyword = request.form.get("keyword", "")
+        keyword = f"%{request.form.get('keyword', '')}%"
         category = request.form.get("category", "")
         location = request.form.get("location", "")
         sort = request.form.get("sort", "popularity")
+        tags = request.form.getlist("tags")
 
-        cur = mysql.connection.cursor()
+        query_parameters = [keyword, keyword]  # Parameters for LIKE conditions
+
         query = """
         SELECT 
             p.*, 
@@ -232,52 +239,65 @@ def search():
         FROM points_of_interest p
         LEFT JOIN reviews r ON p.poi_pid = r.poi_pid
         LEFT JOIN categories c ON p.category_id = c.category_id
-        WHERE (%s = '' OR p.name LIKE %s OR p.description LIKE %s)
+        WHERE (p.name LIKE %s OR p.description LIKE %s)
         """
 
         # Add category condition only if a category is selected
         if category:
             query += "AND p.category_id = %s "
+            query_parameters.append(category)
 
-        # For location, convert the POINT to text for comparison (e.g., using MySQL functions)
+        # If tags are selected, modify the query to filter by these tags
+        if tags:
+            tag_placeholders = ", ".join(["%s"] * len(tags))
+            query += f"AND t.tag_id IN ({tag_placeholders}) "
+            query_parameters.extend(tags)
+
+        # For location, assuming 'location' input as 'lat,lng'
         if location:
-            query += "AND ST_Distance_Sphere(p.location, ST_GeomFromText('POINT({0} {1})', 4326)) < 10000 "
-            # Assuming 10,000 meters (10 km) as the radius within which to find POIs, adjust as necessary
+            lat, lng = map(float, location.split(","))
+            query += "AND ST_Distance_Sphere(p.location, ST_PointFromText('POINT(%s %s)', 4326)) < 10000 "
+            query_parameters.extend([lat, lng])
 
-        query += "GROUP BY p.poi_pid, p.name, p.description, p.category_id, p.location, p.user_id, c.category_name "
+        query += "GROUP BY p.poi_pid "
 
+        # Sorting condition
         if sort == "popularity":
             query += "ORDER BY average_rating DESC"
         else:
             query += "ORDER BY p.posted_date DESC"
 
-        like_keyword = f"%{keyword}%"
-        if location:
-            lat, lng = map(
-                float, location.split(",")
-            )  # Assuming 'location' input as 'lat,lng'
-            cur.execute(query, (keyword, like_keyword, like_keyword, lat, lng))
-        else:
-            cur.execute(query, (keyword, like_keyword, like_keyword))
+        cur.execute(query, query_parameters)
         points_of_interest = cur.fetchall()
+
         return render_template(
             "search_results.html", points_of_interest=points_of_interest
         )
-    # Load categories for the form
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM categories")
-    categories = cur.fetchall()
+
+    # If it's not a POST request, render the search page normally
     return render_template("search.html", categories=categories)
 
 
-@app.route("/events/")
+@app.route('/events/')
 def view_events():
-    """Route to display events."""
     cur = mysql.connection.cursor()
-    if cur.execute("SELECT * FROM Events"):
-        events = cur.fetchall()
-        return render_template("events.html", events=events)
-    return "No events found"
+    query = """
+    SELECT 
+        e.event_id,
+        e.title,
+        e.description,
+        e.event_date,
+        e.location,
+        u.username as host_username
+    FROM events e
+    JOIN user u ON e.user_id = u.user_id
+    ORDER BY e.event_date DESC
+    """
+    cur.execute(query)
+    events = cur.fetchall()
+    cur.close()
+    return render_template('events.html', events=events)
+
 
 
 @app.route("/points_of_interest")

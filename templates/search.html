@@ -1,46 +1,62 @@
 {% extends "layout.html" %}
 
 {% block sub_content %}
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Search Points of Interest</title>
-</head>
-<body>
-    <h1>Search Points of Interest</h1>
-    <form method="POST">
-        <label for="keyword">Enter Keywords:</label>
-        <input type="text" id="keyword" name="keyword" placeholder="Name or description...">
+<h1>Points of Interest Search</h1>
+<form method="POST">
+    <!-- Keyword search -->
+    <div class="form-group">
+        <label for="keyword">Enter Keyword:</label>
+        <input type="text" id="keyword" name="keyword" class="form-control">
+    </div>
 
+    <!-- Category filter -->
+    <div class="form-group">
         <label for="category">Select Category:</label>
-        <select id="category" name="category">
-            <option value="">Any Category</option>
+        <select id="category" name="category" class="form-control selectpicker">
+            <option value="">All Categories</option>
+            <!-- Populate categories -->
             {% for category in categories %}
-            <option value="{{ category.category_id }}">{{ category.name }}</option>
+            <option value="{{ category.category_id }}">{{ category.category_name }}</option>
             {% endfor %}
         </select>
+    </div>
 
-        <label for="location">Location:</label>
-        <input type="text" id="location" name="location" placeholder="Location...">
-
-        <label for="sort">Sort By:</label>
-        <select id="sort" name="sort">
-            <option value="popularity">Most Popular</option>
-            <option value="newest">Newest First</option>
+    <!-- Tags filter -->
+    <div class="form-group">
+        <label for="tags">Select Tags:</label>
+        <select id="tags" name="tags[]" multiple class="form-control selectpicker" data-live-search="true" title="Select Tags...">
+            <!-- Populate tags -->
+            {% for tag in tags %}
+            <option value="{{ tag.tag_id }}">{{ tag.tag_name }}</option>
+            {% endfor %}
         </select>
+    </div>
 
-        <button type="submit">Search</button>
-    </form>
+    <!-- Location filter -->
+    <div class="form-group">
+        <label for="location">Enter Location:</label>
+        <input type="text" id="location" name="location" class="form-control">
+    </div>
 
-    {% with messages = get_flashed_messages() %}
-    {% if messages %}
-    <ul>
-        {% for message in messages %}
-        <li>{{ message }}</li>
-        {% endfor %}
-    </ul>
-    {% endif %}
-    {% endwith %}
-</body>
-</html>
+    <!-- Sort by -->
+    <div class="form-group">
+        <label for="sort">Sort By:</label>
+        <select id="sort" name="sort" class="form-control selectpicker">
+            <option value="popularity">Popularity</option>
+            <option value="date">Date</option>
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Search</button>
+</form>
+
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+<ul class="alert alert-danger">
+    {% for message in messages %}
+    <li>{{ message }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+{% endwith %}
 {% endblock %}
