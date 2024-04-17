@@ -7,9 +7,9 @@
         <th>ID</th>
         <th>Name</th>
         <th>Description</th>
-        <th>Category ID</th>
+        <th>Category</th>
         <th>Location</th>
-        <th>User ID</th>
+        <th>Username</th>
       </tr>
     </thead>
     <tbody>
@@ -18,9 +18,9 @@
           <td>{{ poi['poi_pid'] }}</td>
           <td>{{ poi['name'] }}</td>
           <td>{{ poi['description'] }}</td>
-          <td>{{ poi['category_id'] }}</td>
+          <td>{{ poi['category_name'] }}</td>
           <td>{{ poi.latitude }}, {{ poi.longitude }}</td>
-          <td>{{ poi['user_id'] }}</td>
+          <td>{{ poi['username'] }}</td>
         </tr>
       {% endfor %}
     </tbody>

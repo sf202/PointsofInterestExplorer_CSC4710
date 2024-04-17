@@ -1,59 +1,45 @@
 {% extends "layout.html" %}
 
 {% block sub_content %}
-<div class="container mt-4">
-  <h1 class="mb-3">About Points of Interest Explorer</h1>
+    <h1>About Points of Interest Explorer</h1>
+    <p>Discover, explore, and share your experiences with our vibrant community of travelers and local explorers. Dive into the wonders that every corner of the city holds, from lush parks to historic landmarks, all rated and reviewed by people like you.</p>
 
-  <section id="mission">
-    <h2 class="h4 mb-3">Our Mission</h2>
-    <p>
-      Our mission is to connect people with the places around them. We aim to provide a dynamic platform for discovering, sharing, and discussing the natural wonders, historical treasures, and hidden gems of your city. Whether you're a local resident or a traveler, our POI Explorer is your gateway to new experiences and community engagement.
-    </p>
-  </section>
-  
-  <section id="features">
-    <h2 class="h4 mb-3">Platform Features</h2>
+    <h2>Mission</h2>
+    <p>To connect people with the places around them, fostering a community of exploration and shared experiences.</p>
+
+    <h2>Vision</h2>
+    <p>To be the go-to platform for discovering new places and adventures, both near and far.</p>
+
+    <h3>Average Ratings by Category</h3>
+    {% if avg_ratings_by_category %}
+        <ul>
+            {% for cat in avg_ratings_by_category %}
+            <li>{{ cat.category_name }}: {{ cat.avg_rating }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No ratings available yet.</p>
+    {% endif %}
+
+    <h2>Testimonials</h2>
     <ul>
-      <li>Community-powered database of parks, landmarks, and cultural sites</li>
-      <li>User-generated content that includes stories, reviews, and ratings</li>
-      <li>Robust tagging system for nuanced search and discovery</li>
-      <li>Interactive maps for easy navigation and exploration</li>
-      <li>Social sharing capabilities to spread the word and engage communities</li>
+        {% for testimonial in testimonials %}
+            <li>
+                <strong>Title: {{ testimonial.title }}</strong>
+                <blockquote>
+                    "<em>{{ testimonial.body }}</em>" - {{ testimonial.first_name }} {{ testimonial.last_name }}
+                </blockquote>
+            </li>
+        {% endfor %}
     </ul>
-  </section>
 
-  <section id="data-source">
-    <h2 class="h4 mb-3">Data Source</h2>
-    <p>
-      Leveraging open-source datasets from OpenStreetMap, Wikimedia Commons, and government sources, we offer up-to-date and reliable information. We are committed to data openness and community collaboration.
-    </p>
-  </section>
+    <h2>Featured Points of Interest</h2>
+    <ul>
+        {% for highlight in highlights %}
+            <li>
+                <strong>{{ highlight.name }}</strong>: {{ highlight.description }}
+            </li>
+        {% endfor %}
+    </ul>
 
-  <section id="community-focus">
-    <h2 class="h4 mb-3">Community Focus</h2>
-    <p>
-      Unlike general-purpose mapping or commercial review platforms, our focus is on fostering a vibrant community around local attractions and historical sites. We prioritize the shared experiences and insights of our users, aiming to create a sense of belonging and collective stewardship for our shared spaces.
-    </p>
-  </section>
-
-  <section id="average-rating">
-    <h2 class="h4 mb-3">Community Insights</h2>
-    <p><strong>Average Rating Across All Attractions:</strong> {{ avg_rating | round(2) }}</p>
-  </section>
-
-  <section id="contributions">
-    <h2 class="h4 mb-3">Contributions</h2>
-    <p>We value the contributions of our users, and here are some of the latest entries:</p>
-    <div class="list-group">
-      {% for result in join_results %}
-        <div class="list-group-item">
-          <h5 class="mb-1">{{ result.firstname }}</h5>
-          <p class="mb-1">{{ result.blog_body }}</p>
-          <small>Event organized by user ID: {{ result.event_userid }}</small>
-        </div>
-      {% endfor %}
-    </div>
-  </section>
-
-</div>
 {% endblock %}

@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS events(
     title VARCHAR(255),
     description TEXT,
     event_date DATE,
-    location VARCHAR(255),
+    poi_name VARCHAR(255),
     PRIMARY KEY(event_id)
 );
 

@@ -15,6 +15,7 @@
                         <th scope="col">Description</th>
                         <th scope="col">Date</th>
                         <th scope="col">Location</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -26,6 +27,13 @@
                             <td>{{ event['description'] }}</td>
                             <td>{{ event['event_date'] }}</td>
                             <td>{{ event['location'] }}</td>
+                            <td>
+                            <!-- Check if the logged-in user is the host of the event -->
+                            {% if session['username'] == event.host_username %}
+                                <!-- Provide a link to the edit page for this event -->
+                                <a href="{{ url_for('edit_event', event_id=event.event_id) }}" class="btn btn-sm btn-primary">Edit</a>
+                            {% endif %}
+                            </td>
                         </tr>
                     {% endfor %}
                 </tbody>

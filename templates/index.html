@@ -3,16 +3,16 @@
 {% block sub_content %}
 <div class="container mt-4">
     <h1 class="mb-4 text-center">Latest Reviews</h1>
-    {% if blogs %}
+    {% if reviews %}
         <div class="list-group">
-            {% for blog in blogs %}
-                <a href="/blogs/{{ blog['blog_id'] }}" class="list-group-item list-group-item-action flex-column align-items-start">
+            {% for review in reviews %}
+                <a href="/poi/{{ review['poi_pid'] }}" class="list-group-item list-group-item-action flex-column align-items-start">
                     <div class="d-flex w-100 justify-content-between">
-                        <h5 class="mb-1">{{ blog['title'] }}</h5>
-                        <small>{{ blog['posted_date'].strftime('%Y-%m-%d') }}</small>
+                        <h5 class="mb-1">{{ review['poi_name'] }}</h5>
+                        <small>Reviewed on {{ review['posted_on'].strftime('%Y-%m-%d') }}</small>
                     </div>
-                    <p class="mb-1">{{ blog['body'] | truncate(150) }}</p>
-                    <small>Written by: {{ blog['author'] }}</small>
+                    <p class="mb-1">{{ review['comment'] | truncate(150) }}</p>
+                    <small>Written by: {{ review['username'] }}</small>
                 </a>
                 <hr>
             {% endfor %}
