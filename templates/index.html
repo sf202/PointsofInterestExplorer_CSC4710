@@ -12,6 +12,8 @@
                         <small>Reviewed on {{ review['posted_on'].strftime('%Y-%m-%d') }}</small>
                     </div>
                     <p class="mb-1">{{ review['comment'] | truncate(150) }}</p>
+                    <strong> Rating: {{ review['rating'] }}/5 </strong>
+                    <a </a>
                     <small>Written by: {{ review['username'] }}</small>
                 </a>
                 <hr>

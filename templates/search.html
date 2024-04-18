@@ -21,17 +21,6 @@
         </select>
     </div>
 
-    <!-- Tags filter -->
-    <div class="form-group">
-        <label for="tags">Select Tags:</label>
-        <select id="tags" name="tags[]" multiple class="form-control selectpicker" data-live-search="true" title="Select Tags...">
-            <!-- Populate tags -->
-            {% for tag in tags %}
-            <option value="{{ tag.tag_id }}">{{ tag.tag_name }}</option>
-            {% endfor %}
-        </select>
-    </div>
-
     <!-- Location filter -->
     <div class="form-group">
         <label for="location">Enter Location:</label>
@@ -43,7 +32,7 @@
         <label for="sort">Sort By:</label>
         <select id="sort" name="sort" class="form-control selectpicker">
             <option value="popularity">Popularity</option>
-            <option value="date">Date</option>
+            <option value="poi_pid">Recently Added</option>
         </select>
     </div>
 

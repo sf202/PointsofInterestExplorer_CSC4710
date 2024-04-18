@@ -15,8 +15,7 @@ SQL_SCRIPT3="populate_events.sql"
 SQL_SCRIPT4="populate_user.sql"
 SQL_SCRIPT5="populate_points_of_interest.sql"
 SQL_SCRIPT6="populate_reviews.sql"
-SQL_SCRIPT7="populate_tags.sql"
-SQL_SCRIPT8="populate_poi_tags.sql"
+
 
 
 # fresh start
@@ -32,8 +31,6 @@ mysql -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" $DATABASE_NAME < "$SQL_SCRIPT3"
 mysql -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" $DATABASE_NAME < "$SQL_SCRIPT4"
 mysql -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" $DATABASE_NAME < "$SQL_SCRIPT5"
 mysql -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" $DATABASE_NAME < "$SQL_SCRIPT6"
-mysql -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" $DATABASE_NAME < "$SQL_SCRIPT7"
-mysql -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" $DATABASE_NAME < "$SQL_SCRIPT8"
 
 echo "Database setup completed."
 
