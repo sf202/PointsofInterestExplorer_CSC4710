@@ -1,258 +1,653 @@
-from flask import Flask, render_template, request, redirect, session, flash
+from flask import Flask, render_template, request, redirect, session, flash, url_for
 from flask_bootstrap import Bootstrap
 from flask_mysqldb import MySQL
 from flask_ckeditor import CKEditor
 import yaml
+import os  # Added for environment variable access
 
+# Configuration loading
 app = Flask(__name__)
 Bootstrap(app)
 ckeditor = CKEditor(app)
 
-db = yaml.safe_load(open('db.yaml'))
-app.config['MYSQL_HOST'] = db['mysql_host']
-app.config['MYSQL_USER'] = db['mysql_user']
-app.config['MYSQL_PASSWORD'] = db['mysql_password']
-app.config['MYSQL_DB'] = db['mysql_db']
-app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
+# Load database configuration from YAML file securely
+config_path = os.path.join(os.getcwd(), "db.yaml")
+if os.path.exists(config_path):
+    db = yaml.safe_load(open(config_path))
+    app.config["MYSQL_HOST"] = db["mysql_host"]
+    app.config["MYSQL_USER"] = db["mysql_user"]
+    app.config["MYSQL_PASSWORD"] = db["mysql_password"]
+    app.config["MYSQL_DB"] = db["mysql_db"]
+    app.config["MYSQL_CURSORCLASS"] = "DictCursor"
+else:
+    print("Database configuration file 'db.yaml' is missing.")
+    exit(1)
+
 mysql = MySQL(app)
+app.config["SECRET_KEY"] = "secret"
 
-app.config['SECRET_KEY'] = 'secret'
 
-@app.route('/')
+def get_coordinates(location):
+    try:
+        # Split the location into latitude and longitude
+        parts = location.split(",")
+        if len(parts) != 2:
+            raise ValueError("Location should be in 'latitude,longitude' format.")
+
+        # Convert the latitude and longitude to float
+        latitude = float(parts[0].strip())
+        longitude = float(parts[1].strip())
+
+        return latitude, longitude
+    except ValueError as e:
+        # Handle the case where conversion to float fails or input is not as expected
+        print(f"Error converting location to coordinates: {e}")
+        return None, None
+
+
+def get_user_id_by_username(cur, username):
+    """
+    Retrieve the user_id from the database for a given username.
+
+    Parameters:
+    cur (MySQLCursor): The cursor object to execute the database query.
+    username (str): The username of the user.
+
+    Returns:
+    int: The user_id associated with the username, or None if not found.
+    """
+    try:
+        cur.execute("SELECT user_id FROM user WHERE username = %s", [username])
+        result = cur.fetchone()
+        return result["user_id"] if result else None
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
+
+
+@app.route("/")
 def index():
+    """Home page route showing a list of all blog entries."""
     cur = mysql.connection.cursor()
-    resultValue = cur.execute("SELECT * FROM blog")
-    if resultValue > 0:
-        blogs = cur.fetchall()
-        cur.close()
-        return render_template('index.html', blogs=blogs)
-    cur.close()
-    return render_template('index.html', blogs=None)
-
-@app.route('/about/')
-def about():
-    cur = mysql.connection.cursor()
-
-    # Calculate average rating
-    cur.execute("SELECT AVG(rating) AS avg_rating FROM blog")
-    avg_rating_result = cur.fetchone()
-    avg_rating = avg_rating_result['avg_rating'] if avg_rating_result['avg_rating'] else 0
-
-    # Fetch join results
     cur.execute("""
-        SELECT u.first_name AS firstname, b.body AS blog_body, e.user_id AS event_userid
-        FROM `user` u
-        LEFT JOIN blog b ON u.user_id = b.author
-        LEFT JOIN events e ON u.user_id = e.user_id
+        SELECT
+            r.*,
+            u.username,
+            p.name as poi_name
+        FROM reviews r
+        JOIN user u ON r.user_id = u.user_id
+        JOIN points_of_interest p ON r.poi_pid = p.poi_pid
+        ORDER BY r.posted_on DESC
     """)
-    join_results = cur.fetchall()
-
+    reviews = cur.fetchall()
     cur.close()
-    return render_template('about.html', avg_rating=avg_rating, join_results=join_results)
+    return render_template("index.html", reviews=reviews)
 
 
-
-
-
-
-
-
-
-
-
-@app.route('/map/')
-def map():
-    return render_template('map.html')
-
-
-
-@app.route('/blogs/<int:id>/')
-def blogs(id):
+@app.route("/about/")
+def about():
+    """About page route with application overview, mission, vision, and user testimonials."""
     cur = mysql.connection.cursor()
-    resultValue = cur.execute("SELECT * FROM blog WHERE blog_id = {}".format(id))
-    if resultValue > 0:
-        blog = cur.fetchone()
-        return render_template('blog.html', blog=blog)
-    return 'Blog not found'
 
-@app.route('/register/', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        userDetails = request.form
-        if userDetails['password'] != userDetails['confirm_password']:
-            flash('Passwords do not match! Try again.', 'danger')
-            return render_template('register.html')
-        cur = mysql.connection.cursor()
-        cur.execute("INSERT INTO user(first_name, last_name, username, email, password) "\
-        "VALUES(%s,%s,%s,%s,%s)",(userDetails['first_name'], userDetails['last_name'], \
-        userDetails['username'], userDetails['email'], userDetails['password']))
-        mysql.connection.commit()
-        cur.close()
-        flash('Registration successful! Please login.', 'success')
-        return redirect('/login')
-    return render_template('register.html')
+    # Fetch the average rating by category for all Points of Interest (POIs)
+    cur.execute("""
+        SELECT c.category_name, AVG(r.rating) AS avg_rating
+        FROM reviews r
+        JOIN points_of_interest p ON r.poi_pid = p.poi_pid
+        JOIN categories c ON p.category_id = c.category_id
+        GROUP BY c.category_name
+        ORDER BY avg_rating DESC
+    """)
+    avg_ratings_by_category = cur.fetchall()
 
-@app.route('/login/', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        userDetails = request.form
-        username = userDetails['username']
-        cur = mysql.connection.cursor()
-        resultValue = cur.execute("SELECT * FROM user WHERE username = %s", ([username]))
-        if resultValue > 0:
-            user = cur.fetchone()
-            if userDetails['password'] == user['password']:
-                session['login'] = True
-                session['firstName'] = user['first_name']
-                session['lastName'] = user['last_name']
-                flash('Welcome ' + session['firstName'] +'! You have been successfully logged in', 'success')
-            else:
-                cur.close()
-                flash('Password does not match', 'danger')
-                return render_template('login.html')
-        else:
-            cur.close()
-            flash('User not found', 'danger')
-            return render_template('login.html')
-        cur.close()
-        return redirect('/')
-    return render_template('login.html')
-
-# Write a new blog
-@app.route('/write-blog/',methods=['GET', 'POST'])
-@app.route('/write-blog/',methods=['GET', 'POST'])
-def write_blog():
-    if request.method == 'POST':
-        blogpost = request.form
-        title = blogpost['title']
-        body = blogpost['body']
-        rating = blogpost['rating']
-        posted_date = blogpost['posted_date']
-        author = session['firstName'] + ' ' + session['lastName']
-        cur = mysql.connection.cursor()
-        cur.execute("INSERT INTO blog(title, body, author, rating, posted_date) VALUES(%s, %s, %s, %s, %s)", 
-                    (title, body, author, rating, posted_date))
-        mysql.connection.commit()
-        cur.close()
-        flash("Successfully posted new blog", 'success')
-        return redirect('/')
-    return render_template('write_blog.html')
-
-# View my blog
-@app.route('/my-blogs/')
-def view_blogs():
-    author = session['firstName'] + ' ' + session['lastName']
-    cur = mysql.connection.cursor()
-    result_value = cur.execute("SELECT * FROM blog WHERE author = %s",[author])
-    if result_value > 0:
-        my_blogs = cur.fetchall()
-        return render_template('my_blogs.html',my_blogs=my_blogs)
-    else:
-        return render_template('my_blogs.html',my_blogs=None)
-
-# Edit blog
-@app.route('/edit-blog/<int:id>/', methods=['GET', 'POST'])
-def edit_blog(id):
-    if request.method == 'POST':
-        cur = mysql.connection.cursor()
-        title = request.form['title']
-        body = request.form['body']
-        rating = request.form['rating']
-        posted_date = request.form['posted_date']
-        cur.execute("UPDATE blog SET title = %s, body = %s, rating = %s, posted_date = %s WHERE blog_id = %s",
-                    (title, body, rating, posted_date, id))
-        mysql.connection.commit()
-        cur.close()
-        flash('Blog updated successfully', 'success')
-        return redirect('/blogs/{}'.format(id))
-    
-    cur = mysql.connection.cursor()
-    result_value = cur.execute("SELECT * FROM blog WHERE blog_id = %s", (id,))
-    if result_value > 0:
-        blog = cur.fetchone()
-        blog_form = {
-            'title': blog['title'],
-            'body': blog['body'],
-            'rating': blog['rating'],
-            'posted_date': blog['posted_date'].strftime('%Y-%m-%d') if blog['posted_date'] else None
+    # Ensure we get a value for each category or a placeholder if no ratings
+    avg_ratings_by_category = [
+        {
+            "category_name": res["category_name"],
+            "avg_rating": res["avg_rating"]
+            if res["avg_rating"] is not None
+            else "No ratings yet",
         }
-        return render_template('edit_blog.html', blog_form=blog_form)
-    else:
-        flash('Blog not found', 'danger')
-        return redirect('/')
+        for res in avg_ratings_by_category
+    ]
+
+    # Fetch testimonials, for example, from the most popular reviews or blogs
+    cur.execute("""
+        SELECT b.title, b.body, u.first_name, u.last_name
+        FROM blogs b
+        JOIN user u ON b.user_id = u.user_id
+        LIMIT 5
+    """)
+    testimonials = cur.fetchall()
+
+    # Fetching some highlighted POIs
+    cur.execute("""
+        SELECT p.name, p.description
+        FROM points_of_interest p
+        JOIN reviews r ON p.poi_pid = r.poi_pid
+        GROUP BY p.poi_pid
+        ORDER BY AVG(r.rating) DESC
+        LIMIT 5
+    """)
+    highlights = cur.fetchall()
+
+    cur.close()
+    return render_template(
+        "about.html",
+        avg_ratings_by_category=avg_ratings_by_category,
+        testimonials=testimonials,
+        highlights=highlights,
+    )
 
 
-@app.route('/delete-blog/<int:id>/')
-def delete_blog(id):
-    cur = mysql.connection.cursor()
-    cur.execute("DELETE FROM blog WHERE blog_id = {}".format(id))
-    mysql.connection.commit()
-    flash("Your blog has been deleted", 'success')
-    return redirect('/my-blogs')
+@app.route("/add-poi", methods=["GET", "POST"])
+def add_poi():
+    if request.method == "POST":
+        name = request.form["name"]
+        description = request.form["description"]
+        category_id = request.form["category_id"]
+        location = request.form["location"]  # Example input: "34.0522, -118.2437"
+        latitude, longitude = get_coordinates(location)
 
-@app.route('/logout/')
-def logout():
-    session.clear()
-    flash("You have been logged out", 'info')
-    return redirect('/')
-
-
-
-@app.route('/search', methods=['GET', 'POST'])
-def search():
-    if request.method == 'POST':
-        username = request.form['username']
+        # Retrieve the user_id based on the username from session
+        username = session["username"]
         cur = mysql.connection.cursor()
-        result_value = cur.execute("SELECT first_name, last_name, email FROM user WHERE username = %s", (username,))
-        if result_value > 0:
-            user_info = cur.fetchone()
-            cur.close()
-            return render_template('search_results.html', user_info=user_info)
-        else:
-            cur.close()
-            flash('User not found', 'danger')
-    return render_template('search.html')
+        user_id = get_user_id_by_username(cur, username)
 
-@app.route('/search_results', methods=['POST'])
-def search_results():
-    # Assuming you have retrieved user_info from the database or elsewhere
-    user_info = {
-        'first_name': 'John',
-        'last_name': 'Doe',
-        'email': 'johndoe@example.com'
-    }
-    return render_template('search_results.html', user_info=user_info)
+        cur.execute(
+            """
+            INSERT INTO points_of_interest (name, description, category_id, location, user_id) 
+            VALUES (%s, %s, %s, ST_PointFromText('POINT(%s %s)'), %s)
+        """,
+            (name, description, category_id, latitude, longitude, user_id),
+        )
+        mysql.connection.commit()
+        cur.close()
+        flash("Point of Interest added successfully!", "success")
+        return redirect(url_for("add_poi"))
 
-# Define a new route to view events
-@app.route('/events/')
-def view_events():
     cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM Events")
-    events = cur.fetchall()
-    cur.close()
-    return render_template('events.html', events=events)
-
-
-# Define a new route to view points of interest
-@app.route('/points_of_interest')  # Corrected URL endpoint without trailing slash
-def points_of_interest():
-    # Database query to fetch points of interest data
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM Points_of_Interest")
-    points_of_interest = cur.fetchall()
-    cur.close()
-    return render_template('points_of_interest.html', points_of_interest=points_of_interest)
-
-
-# Define a new route to view categories
-@app.route('/categories')
-def view_categories():
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM Categories")
+    cur.execute("SELECT category_id, category_name FROM categories")
     categories = cur.fetchall()
     cur.close()
-    return render_template('categories.html', categories=categories)
+
+    return render_template("add_poi.html", categories=categories)
 
 
-if __name__ == '__main__':
+@app.route("/map/")
+def map():
+    """Route to display a map (static or interactive depending on implementation)."""
+    return render_template("map.html")
+
+
+@app.route("/blogs/<int:id>/")
+def blogs(id):
+    """Route to display a specific blog entry, identified by its ID."""
+    cur = mysql.connection.cursor()
+    if cur.execute("SELECT * FROM blogs WHERE blog_id = %s", (id,)):
+        blog = cur.fetchone()
+        return render_template("blog.html", blog=blog)
+    return "Blog not found"
+
+
+@app.route("/register/", methods=["GET", "POST"])
+def register():
+    """Route to handle user registration."""
+    if request.method == "POST":
+        userDetails = request.form
+        if userDetails["password"] != userDetails["confirm_password"]:
+            flash("Passwords do not match! Try again.", "danger")
+            return render_template("register.html")
+        cur = mysql.connection.cursor()
+        cur.execute(
+            "INSERT INTO user(first_name, last_name, username, email, password) VALUES (%s,%s,%s,%s,%s)",
+            (
+                userDetails["first_name"],
+                userDetails["last_name"],
+                userDetails["username"],
+                userDetails["email"],
+                userDetails["password"],
+            ),
+        )
+        mysql.connection.commit()
+        cur.close()
+        flash("Registration successful! Please login.", "success")
+        return redirect("/login")
+    return render_template("register.html")
+
+
+@app.route("/login/", methods=["GET", "POST"])
+def login():
+    """Route to handle user login."""
+    if request.method == "POST":
+        userDetails = request.form
+        username = userDetails["username"]
+        cur = mysql.connection.cursor()
+        if cur.execute("SELECT * FROM user WHERE username = %s", ([username])):
+            user = cur.fetchone()
+            if userDetails["password"] == user["password"]:
+                session["login"] = True
+                session["id"] = user["user_id"]
+                session["username"] = user["username"]
+                session["firstName"] = user["first_name"]
+                flash(
+                    "Welcome "
+                    + session["firstName"]
+                    + "! You have been successfully logged in",
+                    "success",
+                )
+            else:
+                flash("Password does not match", "danger")
+                return render_template("login.html")
+        else:
+            flash("User not found", "danger")
+            return render_template("login.html")
+        cur.close()
+        return redirect("/")
+    return render_template("login.html")
+
+
+@app.route("/write-review/", methods=["GET", "POST"])
+def write_review():
+    if request.method == "POST":
+        # Retrieve form data
+        poi_pid = request.form["poi_pid"]
+        comment = request.form["comment"]
+        rating = request.form["rating"]
+        posted_date = request.form["posted_date"]
+
+        # Retrieve the user_id based on the username from session
+        username = session["username"]
+        cur = mysql.connection.cursor()
+        user_id = get_user_id_by_username(cur, username)
+
+        # Insert the new review into the reviews table
+        cur.execute(
+            "INSERT INTO reviews(comment, user_id, rating, posted_on, poi_pid) VALUES (%s, %s, %s, %s, %s)",
+            (comment, user_id, rating, posted_date, poi_pid),
+        )
+        mysql.connection.commit()
+        cur.close()
+        flash("Successfully posted new review", "success")
+        return redirect("/")
+    else:
+        cur = mysql.connection.cursor()
+        # Retrieve Points of Interest to populate the dropdown
+        cur.execute("SELECT poi_pid, name FROM points_of_interest")
+        pois = cur.fetchall()
+        cur.close()
+        return render_template("write_review.html", pois=pois)
+
+
+# @app.route("/discover-blogs/")
+# def discover_blogs():
+#     """Route to display all blog entries from all users."""
+#     cur = mysql.connection.cursor()
+#
+#     # Fetch all blog entries
+#     cur.execute("""
+#                 SELECT
+#                     b.title,
+#                     b.body,
+#                     u.username,
+#                     b.posted_date
+#                 FROM blogs b
+#                 JOIN user u ON b.user_id = u.user_id
+#                 ORDER BY b.posted_date DESC
+#     """)
+#     blog_entries = cur.fetchall()
+#
+#     cur.close()
+#     return render_template("discover_blogs.html", blog_entries=blog_entries)
+#
+#
+# @app.route("/my-blogs/")
+# def view_reviews():
+#     """Route for users to view their own blog posts."""
+#     if not session['login']:
+#         flash('Please log in to view your blogs.', 'danger')
+#         return redirect(url_for('login'))
+#
+#     username = session['username']  # Assuming user_id is stored in the session upon login
+#     cur = mysql.connection.cursor()
+#     cur.execute("SELECT * FROM blogs WHERE username = %s", [username])
+#     my_reviews = cur.fetchall()
+#     cur.close()
+#
+#     return render_template("my_blogs.html", my_reviews=my_reviews)
+#
+#
+# @app.route("/write-blog/", methods=["GET", "POST"])
+# def write_blog():
+#     if request.method == "POST":
+#         # Retrieve form data
+#         blog_id = request.form["blog_id"]
+#         title = request.form["title"]
+#         body = request.form["body"]
+#         poi_pid = request.form["poi_pid"]
+#         posted_date = request.form["posted_date"]
+#
+#         # Retrieve the user_id based on the username from session
+#         username = session["username"]
+#         cur = mysql.connection.cursor()
+#         user_id = get_user_id_by_username(cur, username)
+#
+#         # Insert the new review into the reviews table
+#         cur.execute(
+#             "INSERT INTO reviews(comment, user_id, rating, posted_on, poi_pid) VALUES (%s, %s, %s, %s, %s)",
+#             (comment, user_id, rating, posted_date, poi_pid)
+#         )
+#         mysql.connection.commit()
+#         cur.close()
+#         flash("Successfully posted new review", "success")
+#         return redirect("/")
+#     else:
+#         cur = mysql.connection.cursor()
+#         # Retrieve Points of Interest to populate the dropdown
+#         cur.execute("SELECT poi_pid, name FROM points_of_interest")
+#         pois = cur.fetchall()
+#         cur.close()
+#         return render_template("write_review.html", pois=pois)
+#
+#
+# @app.route("/edit-blog/<int:id>/", methods=["GET", "POST"])
+# def edit_blog(id):
+#     """Route for users to edit their blog posts."""
+#     cur = mysql.connection.cursor()
+#     if request.method == "POST":
+#         cur.execute(
+#             "UPDATE blogs SET title = %s, body = %s, rating = %s, posted_date = %s WHERE blog_id = %s",
+#             (
+#                 request.form["title"],
+#                 request.form["body"],
+#                 request.form["rating"],
+#                 request.form["posted_date"],
+#                 id,
+#             ),
+#         )
+#         mysql.connection.commit()
+#         flash("Blog updated successfully", "success")
+#         return redirect("/blogs/{}".format(id))
+#     if cur.execute("SELECT * FROM blogs WHERE blog_id = %s", (id,)):
+#         blog = cur.fetchone()
+#         return render_template("edit_blog.html", blog_form=blog)
+#     flash("Blog not found", "danger")
+#     return redirect("/")
+
+
+# @app.route("/delete-blog/<int:id>/")
+# def delete_blog(id):
+#     """Route for users to delete their blog posts."""
+#     cur = mysql.connection.cursor()
+#     cur.execute("DELETE FROM blogs WHERE blog_id = %s", (id,))
+#     mysql.connection.commit()
+#     flash("Your blog has been deleted", "success")
+#     return redirect("/my-reviews")
+
+
+@app.route("/logout/")
+def logout():
+    """Route to handle user logout."""
+    session.clear()
+    flash("You have been logged out", "info")
+    return redirect("/")
+
+
+@app.route("/search", methods=["GET", "POST"])
+def search():
+    cur = mysql.connection.cursor()
+    # Load categories for the form
+    cur.execute("SELECT * FROM categories")
+    categories = cur.fetchall()
+
+    if request.method == "POST":
+        keyword = f"%{request.form.get('keyword', '')}%"
+        category = request.form.get("category", "")
+        location = request.form.get("location", "")
+        sort = request.form.get("sort", "popularity")
+
+        query_parameters = [keyword, keyword]  # Parameters for LIKE conditions
+
+        query = """
+        SELECT 
+            p.*, 
+            COALESCE(AVG(r.rating), 0) AS average_rating,
+            c.category_name AS category_name,
+            ST_X(p.location) AS latitude,
+            ST_Y(p.location) AS longitude
+        FROM points_of_interest p
+        LEFT JOIN reviews r ON p.poi_pid = r.poi_pid
+        LEFT JOIN categories c ON p.category_id = c.category_id
+        WHERE (p.name LIKE %s OR p.description LIKE %s)
+        """
+
+        # Add category condition only if a category is selected
+        if category:
+            query += "AND p.category_id = %s "
+            query_parameters.append(category)
+
+        # For location, assuming 'location' input as 'lat,lng'
+        if location:
+            lat, lng = get_coordinates(location)
+            query += "AND ST_Distance_Sphere(p.location, ST_PointFromText('POINT(%s %s)', 4326)) < 10000 "
+            query_parameters.extend([lat, lng])
+
+        query += "GROUP BY p.poi_pid "
+
+        # Sorting condition
+        if sort == "popularity":
+            query += "ORDER BY average_rating DESC"
+        else:
+            query += "ORDER BY p.poi_pid"
+
+        cur.execute(query, query_parameters)
+        points_of_interest = cur.fetchall()
+
+        return render_template(
+            "search_results.html", points_of_interest=points_of_interest
+        )
+
+    # If it's not a POST request, render the search page normally
+    return render_template("search.html", categories=categories)
+
+
+@app.route("/create-event", methods=["GET", "POST"])
+def create_event():
+    cur = mysql.connection.cursor()
+
+    if request.method == "POST":
+        # Extract the form data
+        title = request.form.get("title")
+        description = request.form.get("description")
+        event_date = request.form.get("event_date")
+        poi_id = request.form.get("poi_id")  # Use 'poi_id' to match the form field
+
+        # Retrieve the user_id based on the username from session
+        username = session["username"]
+        user_id = get_user_id_by_username(cur, username)
+
+        # Insert the new event into the database
+        cur.execute(
+            "INSERT INTO events (title, description, event_date, user_id, poi_id) VALUES (%s, %s, %s, %s, %s)",
+            (title, description, event_date, user_id, poi_id),
+        )
+
+        # Commit the transaction
+        mysql.connection.commit()
+        cur.close()
+
+        # Redirect to the events page, or another success page
+        return redirect(url_for("view_events"))
+
+    # For a GET request, retrieve Points of Interest to populate the dropdown
+    cur.execute("SELECT poi_pid, name FROM points_of_interest")
+    pois = cur.fetchall()
+    cur.close()
+
+    # Render the form page and pass Points of Interest to the template
+    return render_template("create_event.html", pois=pois)
+
+
+@app.route("/edit-event/<int:event_id>", methods=["GET", "POST"])
+def edit_event(event_id):
+    # Verify user is logged in and get their username
+    if "username" not in session:
+        return redirect(url_for("login"))
+
+    username = session["username"]
+    cur = mysql.connection.cursor()
+
+    # Retrieve the user_id based on the username from session
+    user_id = get_user_id_by_username(cur, username)
+
+    # Retrieve the Points of Interest for the dropdown
+    cur.execute("SELECT poi_pid, name FROM points_of_interest")
+    pois = cur.fetchall()
+
+    # Retrieve the event details to pre-populate the form
+    if request.method == "GET":
+        cur.execute(
+            """
+                    SELECT e.*, u.username
+                    FROM events e
+                    JOIN user u ON e.user_id = u.user_id
+                    WHERE e.event_id = %s AND u.username = %s
+                    """,
+            (event_id, username),
+        )
+        event = cur.fetchone()
+
+        if event is None:
+            cur.close()
+            return (
+                "Event not found or you do not have permission to edit this event",
+                404,
+            )
+
+        # Render the edit page and pass both the event and POIs
+        return render_template("edit_event.html", event=event, pois=pois)
+
+    # Update the event details in the database
+    if request.method == "POST":
+        title = request.form.get("title")
+        description = request.form.get("description")
+        event_date = request.form.get("event_date")
+        poi_id = request.form.get("poi_id")  # Get the poi_id from the form
+
+        # Execute the update query
+        cur.execute(
+            """
+                    UPDATE events SET
+                        title = %s,
+                        description = %s,
+                        event_date = %s,
+                        poi_id = %s  # Update the poi_id
+                    WHERE event_id = %s AND user_id = %s
+                    """,
+            (title, description, event_date, poi_id, event_id, user_id),
+        )
+        mysql.connection.commit()
+        cur.close()
+
+        return redirect(url_for("view_events"))
+
+    # Close the cursor if it's not closed by the above
+    if not cur.closed:
+        cur.close()
+
+
+@app.route("/delete-event/<int:event_id>", methods=["POST"])
+def delete_event(event_id):
+    # Verify user is logged in and get their username
+    if "username" not in session:
+        return redirect(url_for("login"))
+
+    # Get the current user's username
+    username = session["username"]
+    cur = mysql.connection.cursor()
+
+    # Retrieve the user_id based on the username from session
+    user_id = get_user_id_by_username(cur, username)
+
+    # Delete the event, but first ensure the event belongs to the user
+    cur.execute(
+        "DELETE FROM events WHERE event_id = %s AND user_id = %s", (event_id, user_id)
+    )
+
+    # Check if the event was deleted
+    if cur.rowcount == 0:
+        # No event was deleted, this means either the event did not exist
+        # or the event did not belong to the user
+        cur.close()
+        return "Event not found or you do not have permission to delete this event", 403
+
+    # Commit the transaction
+    mysql.connection.commit()
+    cur.close()
+
+    # Redirect to the events overview page or a success page
+    return redirect(url_for("view_events"))
+
+
+@app.route("/events/")
+def view_events():
+    cur = mysql.connection.cursor()
+    query = """
+    SELECT
+        e.event_id,
+        e.title,
+        e.description,
+        e.event_date,
+        poi.name as poi_name,
+        u.username as host_username
+    FROM events e
+    JOIN user u ON e.user_id = u.user_id
+    JOIN Points_of_Interest poi ON e.poi_id = poi.poi_pid
+    ORDER BY e.event_date
+    """
+    cur.execute(query)
+    events = cur.fetchall()
+    cur.close()
+    return render_template("events.html", events=events)
+
+
+@app.route("/points_of_interest")
+def points_of_interest():
+    """Route to display points of interest."""
+    cur = mysql.connection.cursor()
+    # Assuming 'username' column exists in 'Users' table and it's related to 'Points_of_Interest' via 'user_id'.
+    query = """
+    SELECT
+        poi.poi_pid,
+        poi.name,
+        poi.description,
+        poi.category_id,
+        ST_X(poi.location) AS latitude,
+        ST_Y(poi.location) AS longitude,
+        usr.username,
+        ctg.category_name
+    FROM Points_of_Interest poi
+    JOIN User usr ON poi.user_id = usr.user_id
+    JOIN Categories ctg ON poi.category_id = ctg.category_id
+    """
+    if cur.execute(query):
+        points_of_interest = cur.fetchall()
+        return render_template(
+            "points_of_interest.html", points_of_interest=points_of_interest
+        )
+    else:
+        return "No points of interest found"
+
+
+@app.route("/categories")
+def view_categories():
+    """Route to display categories of points of interest."""
+    cur = mysql.connection.cursor()
+    if cur.execute("SELECT * FROM Categories"):
+        categories = cur.fetchall()
+        return render_template("categories.html", categories=categories)
+    return "No categories found"
+
+
+if __name__ == "__main__":
     app.run(debug=True)

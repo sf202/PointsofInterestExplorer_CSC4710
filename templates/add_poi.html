@@ -1,0 +1,35 @@
+{% extends "layout.html" %}
+
+{% block sub_content %}
+<div class="container my-4">
+    <h1 class="text-center mb-4">Add a New Point of Interest</h1>
+    <form method="POST">
+        <div class="form-group">
+            <label for="name">Name:</label>
+            <input type="text" class="form-control" id="name" name="name" required>
+        </div>
+
+        <div class="form-group">
+            <label for="description">Description:</label>
+            <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="category_id">Category:</label>
+            <select class="form-control" id="category_id" name="category_id" required>
+                <!-- Dynamically populate this dropdown with categories from your database -->
+                {% for category in categories %}
+                    <option value="{{ category.category_id }}">{{ category.category_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="location">Location (latitude, longitude):</label>
+            <input type="text" class="form-control" id="location" name="location" placeholder="34.0522, -118.2437" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+</div>
+{% endblock %}

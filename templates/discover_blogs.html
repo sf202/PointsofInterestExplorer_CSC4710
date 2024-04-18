@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+
+{% block sub_content %}
+<div class="container mt-4">
+    <h1 class="mb-4 text-center">Discover Blogs</h1>
+    <div class="d-flex justify-content-end">
+        <!-- Button to view the user's own blogs -->
+        <a href="{{ url_for('view_my_blogs') }}" class="btn btn-primary mb-3">View My Blogs</a>
+    </div>
+    <div class="list-group">
+        {% for blog in blog_entries %}
+            <div class="list-group-item">
+                <h5>{{ blog.title }}</h5>
+                <p class="mb-1">{{ blog.body | truncate(150) }}</p>
+                <small>Written by: {{ blog.username }}</small>
+                <small>Posted on: {{ blog.posted_on.strftime('%Y-%m-%d') }}</small>
+            </div>
+        {% else %}
+            <div class="alert alert-info" role="alert">
+                No blog entries have been found.
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

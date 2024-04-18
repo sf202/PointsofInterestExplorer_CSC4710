@@ -1,13 +1,29 @@
 {% extends "layout.html" %}
-{% block sub_content %}
-  {% if blogs %}
-    {% for blog in blogs %}
-      <h3> <a href="/blogs/{{ blog['blog_id'] }}">{{blog['title']}} </a> </h3>
-      <h5>Written by {{blog['author']}}</h5>
 
-      <hr>
-    {% endfor %}
-  {% else %}
-    <h3>No blogs have been written yet</h3>
-  {% endif %}
+{% block sub_content %}
+<div class="container mt-4">
+    <h1 class="mb-4 text-center">Latest Reviews</h1>
+    {% if reviews %}
+        <div class="list-group">
+            {% for review in reviews %}
+                <a href="/poi/{{ review['poi_pid'] }}" class="list-group-item list-group-item-action flex-column align-items-start">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">{{ review['poi_name'] }}</h5>
+                        <small>Reviewed on {{ review['posted_on'].strftime('%Y-%m-%d') }}</small>
+                    </div>
+                    <p class="mb-1">{{ review['comment'] | truncate(150) }}</p>
+                    <strong> Rating: {{ review['rating'] }}/5 </strong>
+                    <a </a>
+                    <small>Written by: {{ review['username'] }}</small>
+                </a>
+                <hr>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            No reviews have been written yet.
+        </div>
+    {% endif %}
+</div>
 {% endblock %}
+

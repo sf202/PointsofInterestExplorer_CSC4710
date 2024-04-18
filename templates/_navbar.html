@@ -3,33 +3,55 @@
       <a class="navbar-brand" href="#">Points of Interest Explorer</a>
     </div>
     <ul class="nav navbar-nav">
-      <li><a href="/">Home</a></li>
-      {% if session.login %}
-      <li><a href="/write-blog">Write a new Review</a></li>
-      <li><a href="/my-blogs">View my Reviews</a></li>
+      <li class="nav-item">
+        <a class="nav-link" href="/">Home</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/about">About</a>
+      </li>
+      {% if session['login'] %}
+      <li class="nav-item">
+        <a class="nav-link" href="/add-poi">Add a POI</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/write-review">Write a New Review</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/create-event">Create an Event</a>
+      </li>
+      <!-- <li class="nav-item"> -->
+      <!--   <a class="nav-link" href="/discover-blogs">Discover Blog</a> -->
+      <!-- </li> -->
       {% endif %}
-      <li><a href="/search">Search</a></li> <!-- Add this line -->
-      <li><a href="/events">View Events</a></li> <!-- Added link to events -->
-      <li><a href="/points_of_interest">points_of_interest</a></li> <!-- Added link to events -->
-      <li><a href="/categories">categories</a></li> <!-- Added link to events -->
-      <li><a href="/about">About</a></li>
-      <li><a href="/map/">Map</a></li>
+      <li class="nav-item">
+        <a class="nav-link" href="/search">Search</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/events">View Events</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/points_of_interest">Points of Interest</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/categories">Categories</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/map">Map</a>
+      </li>
 
 
     </ul>
     <ul class="nav navbar-nav navbar-right">
-      {% if session.login %}
-      <li>
-        <a href="/logout">Logout</a>
+      {% if session['login'] %}
+      <li class="nav-item">
+        <a class="nav-link" href="/logout">Logout</a>
       </li>
       {% else %}
-      <li>
-        <a href="/login">Login</a>
+      <li class="nav-item">
+        <a class="nav-link" href="/login">Login</a>
       </li>
-      <li>
-        <a href="/register">Register</a>
-        <li>
-
+      <li class="nav-item">
+        <a class="nav-link" href="/register">Register</a>
       </li>
       {% endif %}
     </ul>

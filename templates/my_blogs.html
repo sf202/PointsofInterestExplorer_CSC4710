@@ -1,17 +1,34 @@
 {% extends "layout.html" %}
 
 {% block sub_content %}
-  {% if my_blogs %}
-    <table cellpadding="5" >
-    {% for my_blog in my_blogs %}
-      <tr>
-        <td style="padding:0 15px;"> <h3> <a href="/blogs/{{ my_blog['blog_id'] }}">{{my_blog['title']}} </a> </h3></td>
-        <td style="padding:0 15px;"> <a href="/edit-blog/{{ my_blog['blog_id'] }}" class="btn btn-primary">Edit</a></td>
-        <td style="padding:0 15px;"> <a href="/delete-blog/{{ my_blog['blog_id'] }}" class="btn btn-danger">Delete</a></td>
-      </tr>
-    {% endfor %}
-    </table>
-  {% else %}
-    <h3>No blogs have been written by you</h3>
-  {% endif %}
+<div class="container my-4">
+    <h2 class="text-center mb-4">My Blog</h2>
+    {% if my_blogs %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Title</th>
+                        <th scope="col">Edit</th>
+                        <th scope="col">Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for my_blog in my_blogs %}
+                    <tr>
+                        <td><a href="/blogs/{{ my_blog['blog_id'] }}">{{ my_blog['title'] }}</a></td>
+                        <td><a href="/edit-blog/{{ my_blog['blog_id'] }}" class="btn btn-primary">Edit</a></td>
+                        <td><a href="/delete-blog/{{ my_blog['blog_id'] }}" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this review?');">Delete</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            No reviews have been written by you.
+        </div>
+    {% endif %}
+</div>
 {% endblock %}
+

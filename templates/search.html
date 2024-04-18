@@ -1,27 +1,51 @@
-{%extends "layout.html" %}
+{% extends "layout.html" %}
 
 {% block sub_content %}
-<!DOCTYPE html>
-<html>
-<head>
-    <title>User Search</title>
-</head>
-<body>
-    <h1>User Search</h1>
-    <form method="POST">
-        <label for="username">Enter Username:</label>
-        <input type="text" id="username" name="username" required>
-        <button type="submit">Search</button>
-    </form>
-    {% with messages = get_flashed_messages() %}
-    {% if messages %}
-    <ul>
-        {% for message in messages %}
-        <li>{{ message }}</li>
-        {% endfor %}
-    </ul>
-    {% endif %}
-    {% endwith %}
-</body>
-</html>
+<h1>Points of Interest Search</h1>
+<form method="POST">
+    <!-- Keyword search -->
+    <div class="form-group">
+        <label for="keyword">Enter Keyword:</label>
+        <input type="text" id="keyword" name="keyword" class="form-control">
+    </div>
+
+    <!-- Category filter -->
+    <div class="form-group">
+        <label for="category">Select Category:</label>
+        <select id="category" name="category" class="form-control selectpicker">
+            <option value="">All Categories</option>
+            <!-- Populate categories -->
+            {% for category in categories %}
+            <option value="{{ category.category_id }}">{{ category.category_name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- Location filter -->
+    <div class="form-group">
+        <label for="location">Enter Location:</label>
+        <input type="text" id="location" name="location" class="form-control">
+    </div>
+
+    <!-- Sort by -->
+    <div class="form-group">
+        <label for="sort">Sort By:</label>
+        <select id="sort" name="sort" class="form-control selectpicker">
+            <option value="popularity">Popularity</option>
+            <option value="poi_pid">Recently Added</option>
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Search</button>
+</form>
+
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+<ul class="alert alert-danger">
+    {% for message in messages %}
+    <li>{{ message }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+{% endwith %}
 {% endblock %}
